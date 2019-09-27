@@ -29,6 +29,13 @@ public class ToonStandardConfiguration : ScriptableObject
                     }
                 }
 #endif
+                var res = Resources.LoadAll<ToonStandardConfiguration>("");
+                if (res.Length > 0)
+                {
+                    _Instance = res[0];
+                    return _Instance;
+                }
+
 				_Instance = CreateInstance<ToonStandardConfiguration>();
                 _Instance._IsDefaultInstance = true;
             }
@@ -37,6 +44,16 @@ public class ToonStandardConfiguration : ScriptableObject
         }
     }
     private static ToonStandardConfiguration _Instance;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void RuntimeLoad()
+    {
+        var c = Instance;
+        if (c._IsDefaultInstance)
+        {
+            Debug.LogWarning("No Toon Standard Configuration included in build!");
+        }
+    }
 
     [Header("Diffuse Wrap")]
     [SerializeField]
