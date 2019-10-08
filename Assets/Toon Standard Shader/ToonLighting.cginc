@@ -7,6 +7,7 @@
 
 #include "UnityCG.cginc"
 #include "UnityPBSLighting.cginc"
+#include "UnityShaderVariables.cginc"
 #include "Lighting.cginc"
 #include "AutoLight.cginc"
 
@@ -29,14 +30,15 @@
 
 struct appdata {
     float4 vertex : POSITION;
-    float3 normal : NORMAL;
+    float4 normal : NORMAL;
+    float4 tangent : TANGENT;
     float2 uv : TEXCOORD0;
     float2 uv2 : TEXCOORD1;
 };
 
 struct v2f {
     float2 uv : TEXCOORD0;
-    float3 worldNormal : TEXCOORD1;
+    float3 normal : TEXCOORD1;
     float3 worldPos : TEXCOORD2;
     float4 pos : TEXCOORD3;
     #if defined(VERTEXLIGHT_ON)
@@ -48,6 +50,8 @@ struct v2f {
         float2 lightmapUV : TEXCOORD7;
     #endif
     float2 uv2 : TEXCOORD8;
+    float3 tangent : TEXCOORD9;
+    float3 binormal : TEXCOORD10;
 };
 
 struct ToonPixelData {
@@ -228,6 +232,8 @@ float4 _EmissionTex_ST;
 sampler2D _EmissionTex;
 float4 _EmissionColor;
 float4 _DabsScale;
+sampler2D _NormalMap;
+float _BumpScale;
 
 #if DIFFUSE_WRAP_ON
 float _DiffuseWrapAmount = 0.5;
@@ -259,7 +265,12 @@ v2f vert (
     #if SHOULD_USE_LIGHTMAPUV
         o.lightmapUV = v.uv2 * unity_LightmapST.xy + unity_LightmapST.zw;
     #endif
-    o.worldNormal = UnityObjectToWorldNormal(v.normal);
+
+    // https://catlikecoding.com/unity/tutorials/rendering/part-6/
+    o.normal = UnityObjectToWorldNormal(v.normal);
+    o.tangent = UnityObjectToWorldDir(v.tangent.xyz);
+    o.binormal = cross(o.normal.xyz, o.tangent.xyz) * (v.tangent.w * unity_WorldTransformParams.w);
+
     o.worldPos = mul(unity_ObjectToWorld, v.vertex);
     o.pos = UnityObjectToClipPos(v.vertex);
     ComputeVertexLightColor(o);
@@ -276,15 +287,20 @@ fixed4 frag (
     UNITY_VPOS_TYPE screenPos : VPOS
 ) : SV_Target {
     fixed4 mainColor = tex2D(_MainTex, i.uv) * _Color;
+    fixed3 normals = UnpackScaleNormal(tex2D(_NormalMap, i.uv), _BumpScale);
     fixed4 specColor = tex2D(_SpecularTex, i.uv) * _SpecularColor;
-    
-    i.worldNormal = normalize(i.worldNormal);
-    
+        
     ToonPixelData data;
     data.albedo = mainColor;
     data.specular = specColor;
     data.worldPos = i.worldPos;
-    data.worldNormal = i.worldNormal;
+
+    data.worldNormal = normalize(
+        normals.x * i.tangent  +
+        normals.y * i.binormal +
+        normals.z * i.normal
+    );
+
     data.specGloss = _SpecularGloss;
     data.specPower = _SpecularPower;
     data.pos = i.pos;

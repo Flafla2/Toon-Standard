@@ -4,9 +4,13 @@
 
 using UnityEngine;
 
+#if UNITY_EDITOR
+[UnityEditor.InitializeOnLoad]
+#endif
 [CreateAssetMenu(fileName = "ToonStandardConfiguration", menuName = "Toon Standard Configuration", order = 750)]
 public class ToonStandardConfiguration : ScriptableObject
 {
+    private static bool _IsStaticLoading = false;
     public static ToonStandardConfiguration Instance
     {
         get
@@ -15,7 +19,7 @@ public class ToonStandardConfiguration : ScriptableObject
             {
 #if UNITY_EDITOR
                 // Try to load a ToonStandardConfiguration from the editor
-                if (!Application.isPlaying)
+                if (_IsStaticLoading || !Application.isPlaying)
                 {
                     var assetPaths = UnityEditor.AssetDatabase.FindAssets("t:ToonStandardConfiguration");
                     foreach (string path in assetPaths)
@@ -45,14 +49,35 @@ public class ToonStandardConfiguration : ScriptableObject
     }
     private static ToonStandardConfiguration _Instance;
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void RuntimeLoad()
+    private static void InitStatic()
     {
+        _IsStaticLoading = true;
         var c = Instance;
         if (c._IsDefaultInstance)
         {
             Debug.LogWarning("No Toon Standard Configuration included in build!");
         }
+        _IsStaticLoading = false;
+    }
+
+#if UNITY_EDITOR
+    private static void StaticUpdateCallback()
+    {
+        // Hack to load the toon configuration in the editor on editor load
+        // Simply adds itself to the UnityEditor update callback, then removes after running once.
+        InitStatic();
+        UnityEditor.EditorApplication.update -= StaticUpdateCallback;
+    }
+    static ToonStandardConfiguration()
+    {
+        UnityEditor.EditorApplication.update += StaticUpdateCallback;
+    }
+#endif
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void RuntimeLoad()
+    {
+        InitStatic();
     }
 
     [Header("Diffuse Wrap")]

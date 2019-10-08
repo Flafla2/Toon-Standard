@@ -92,6 +92,17 @@ public class ToonStandardEditor : ShaderGUI
 
         GUILayout.Space(12);
 
+        var normTex = property("_NormalMap");
+        var normTexName = MakeLabel(normTex.displayName, "Normal Map");
+
+        materialEditor.TexturePropertySingleLine(normTexName, normTex);
+        EditorGUI.indentLevel += 2;
+        var normScale = property("_BumpScale");
+        materialEditor.FloatProperty(normScale, normScale.displayName);
+        EditorGUI.indentLevel -= 2;
+
+        GUILayout.Space(12);
+
         var emissionTex = property("_EmissionTex");
         var emissionCol = property("_EmissionColor");
 

@@ -7,6 +7,7 @@ Shader "Toon Standard"
     Properties
     {
         _MainTex ("Main Color", 2D) = "white" {}
+        [NoScaleOffset] _NormalMap ("Normal Map", 2D) = "bump" {}
         _Color ("Tint", Color) = (1,1,1,1)
         
         _SpecularTex ("Specular Color", 2D) = "white" {}
@@ -18,6 +19,7 @@ Shader "Toon Standard"
         _EmissionColor ("Emission Tint", Color) = (0,0,0)
 
         _DabsScale ("Specular Dabs Scale", Vector) = (1,1,1,1)
+        _BumpScale ("Normal Map Scale", Float) = 1.0
     }
     CustomEditor "ToonStandardEditor"
     SubShader
