@@ -8,7 +8,7 @@ This shader is what I call the "Toon Standard" shader.  It is a Toon Shader that
 ## Usage
 
 ![](preview3.png) ![](preview4.png)
-![](preview5.gif)
+![](preview5.gif) 
 
 This Shader was written for Unity 2019.2.  There are no especially new features used, but you may need to make minor changes to the shader files for the shader to work on older Unity versions.  To use, download the Unitypackage file from the releases page of this repository.  After importing the Unitypackage, navigate to the "Toon Standard" folder.  The `ToonStandardConfiguration` (pictured above, left) asset contains global configuration attributes for all Toon Standard materials.  Importantly, this is where you configure the shader's global color ramp.  You can also change the tiled hatch pattern used for specular highlights here.
 
