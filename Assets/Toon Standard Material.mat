@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Toon Test
+  m_Name: Toon Standard Material
   m_Shader: {fileID: 4800000, guid: afd4e5df5a9cf4406a8e772d4ea69d78, type: 3}
   m_ShaderKeywords: DAB_COORDS_TRIPLANAR
   m_LightmapFlags: 4
@@ -72,7 +72,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
-    - _BumpScale: 0.73
+    - _BumpScale: 0.91
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
