@@ -57,6 +57,7 @@ struct v2f {
 struct ToonPixelData {
     fixed4 albedo;
     fixed4 specular;
+    fixed4 rimLighting;
     float4 pos;
     float3 worldPos;
     float3 worldNormal;
@@ -126,7 +127,7 @@ UnityLight CreateLight (in ToonPixelData i) {
 }
 
 // https://catlikecoding.com/unity/tutorials/rendering/part-5/
-UnityIndirect CreateIndirectLight (in ToonPixelData i) {
+UnityIndirect CreateIndirectLight (in ToonPixelData i, in float3 viewDir) {
     UnityIndirect indirectLight;
     indirectLight.diffuse = 0;
     indirectLight.specular = 0;
@@ -144,6 +145,14 @@ UnityIndirect CreateIndirectLight (in ToonPixelData i) {
         #endif
         
         indirectLight.diffuse += max(0, ShadeSH9(float4(i.worldNormal, 1)));
+
+        float3 reflectionDir = reflect(-viewDir, i.worldNormal);
+        Unity_GlossyEnvironmentData envData;
+        envData.roughness = 1 - i.albedo.a;
+        envData.reflUVW = reflectionDir;
+        indirectLight.specular = Unity_GlossyEnvironment(
+            UNITY_PASS_TEXCUBE(unity_SpecCube0), unity_SpecCube0_HDR, envData
+        );
     #endif
     
     return indirectLight;
@@ -153,21 +162,23 @@ UnityIndirect CreateIndirectLight (in ToonPixelData i) {
 // Shading Logic //
 
 fixed4 shadeToon ( ToonPixelData d ) {
-    #if ENERGY_CONSERVATION_ON
-    float oneMinusReflectivity;
-    d.albedo.xyz = EnergyConservationBetweenDiffuseAndSpecular(
-        d.albedo, d.specular, oneMinusReflectivity
-    );
-    d.specPower = 1.0; // specular power breaks energy conservation
-    #endif
+    // float oneMinusReflectivity;
+    // d.albedo.rgb = EnergyConservationBetweenDiffuseAndSpecular(
+    //     d.albedo, d.specular, oneMinusReflectivity
+    // );
+    //d.specPower = 1.0; // specular power breaks energy conservation
+    float reflectivity = SpecularStrength(d.specular);
+    float oneMinusReflectivity = 1 - reflectivity;
+    d.albedo.rgb = min(d.albedo.rgb, oneMinusReflectivity);
+
+    float3 viewDir = normalize(_WorldSpaceCameraPos - d.worldPos);
     
     UnityLight light = CreateLight(d);
-    UnityIndirect indLight = CreateIndirectLight(d);
+    UnityIndirect indLight = CreateIndirectLight(d, viewDir);
     
     // Diffuse + optional half diffuse for base color
     // Blinn/Phong for Specular
     // https://www.jordanstevenstechart.com/lighting-models
-    float3 viewDir = normalize(_WorldSpaceCameraPos - d.worldPos);
     float3 halfDir = normalize(viewDir + light.dir);
     
     float ndotl = saturate(dot(light.dir, d.worldNormal));
@@ -198,20 +209,25 @@ fixed4 shadeToon ( ToonPixelData d ) {
         col2 * nblend.y +
         col3 * nblend.z;
     #endif
-    
+
     float specPow = d.specGloss * 100;
     float3 specular = pow(ndotv, specPow) * d.specPower * light.color * d.specular * specDabs;
     
     ndotl = lightingRamp(ndotl);
 
-    #if ENERGY_CONSERVATION_ON
     // http://www.rorydriscoll.com/2009/01/25/energy-conservation-in-games/
     // Note: technically we would have to divide by pi as well, but since Unity
     //       omits the constant pi term in its shaders I do this as well to stay
     //       consistent with the Standard shader.
     specular = specular * (specPow + 8.0) / 8.0;
+
+    float grazing = saturate(d.albedo.a + (1 - oneMinusReflectivity));
+    float fresnel = saturate(1 - pow(dot(viewDir, d.worldNormal), 1/((1-0.9*d.rimLighting.a) * 10)));
+
+    specular += indLight.specular * (d.specular.rgb * reflectivity + d.rimLighting * fresnel);
+
+    // Obey energy conservation in the diffuse term (integral of brdf = 1)
     ndotl /= _RampIntegral;
-    #endif
 
     float3 diffuse = d.albedo.rgb * (light.color * ndotl + indLight.diffuse);
     
@@ -232,6 +248,7 @@ float4 _EmissionTex_ST;
 sampler2D _EmissionTex;
 float4 _EmissionColor;
 float4 _DabsScale;
+float4 _RimLighting;
 sampler2D _NormalMap;
 float _BumpScale;
 
@@ -303,6 +320,7 @@ fixed4 frag (
 
     data.specGloss = _SpecularGloss;
     data.specPower = _SpecularPower;
+    data.rimLighting = _RimLighting;
     data.pos = i.pos;
     #if DIFFUSE_WRAP_ON
     data.wrapAmount = _DiffuseWrapAmount;

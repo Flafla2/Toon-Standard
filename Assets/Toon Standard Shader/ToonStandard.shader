@@ -6,14 +6,15 @@ Shader "Toon Standard"
 {
     Properties
     {
-        _MainTex ("Main Color", 2D) = "white" {}
+        _MainTex ("Main Color (RGB) Smoothness (A)", 2D) = "white" {}
         [NoScaleOffset] _NormalMap ("Normal Map", 2D) = "bump" {}
         _Color ("Tint", Color) = (1,1,1,1)
         
         _SpecularTex ("Specular Color", 2D) = "white" {}
         _SpecularColor ("Specular Tint", Color) = (1,1,1,1)
-        _SpecularGloss ("Specular Gloss", Range(0.1, 1.0)) = 0.1
-        _SpecularPower ("Specular Power", Float) = 1.0
+        _SpecularGloss ("Highlight Gloss", Range(0.01, 5.0)) = 0.1
+        _SpecularPower ("Highlight Power", Float) = 1.0
+        _RimLighting ("Rim Lighting (RGB) Power (A)", Color) = (1,1,1,1)
                 
         _EmissionTex ("Emission", 2D) = "white" {}
         _EmissionColor ("Emission Tint", Color) = (0,0,0)
@@ -45,8 +46,6 @@ Shader "Toon Standard"
             
             // Use "Half Lambert" / Valve shading for the diffuse map
             #pragma multi_compile DIFFUSE_WRAP_ON DIFFUSE_WRAP_OFF
-            // Conserve energy for specular surfaces (more specular => darker albedo)
-            #pragma multi_compile ENERGY_CONSERVATION_ON ENERGY_CONSERVATION_OFF
             #pragma multi_compile DAB_COORDS_TRIPLANAR DAB_COORDS_UV DAB_COORDS_UV2
             
             #include "ToonMultiCompiles.cginc"
@@ -77,7 +76,6 @@ Shader "Toon Standard"
             #pragma multi_compile_fwdadd_fullshadows
             
             #pragma multi_compile DIFFUSE_WRAP_ON DIFFUSE_WRAP_OFF
-            #pragma multi_compile ENERGY_CONSERVATION_ON ENERGY_CONSERVATION_OFF
             #pragma multi_compile DAB_COORDS_TRIPLANAR DAB_COORDS_UV DAB_COORDS_UV2
             
             #include "ToonMultiCompiles.cginc"

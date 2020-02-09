@@ -18,10 +18,8 @@ public class ToonStandardEditor : ShaderGUI
 
     }
 
-    private bool _ShowEnergyConservationWarning = false;
     private bool _ShowNoConfigWarning = false;
 
-    private bool _ExpandedEnergyConservationWarning = false;
     private bool _ExpandedNoConfigWarning = false;
 
     private bool _ShowNoResourceWarning = false;
@@ -35,6 +33,8 @@ public class ToonStandardEditor : ShaderGUI
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
         var config = ToonStandardConfiguration.Instance;
+        Material mat = materialEditor.target as Material;
+
         if (!config.IsDefaultInstance)
         {
             if (Event.current.type == EventType.Layout)
@@ -71,21 +71,24 @@ public class ToonStandardEditor : ShaderGUI
 
         GUILayout.Space(12);
 
+
+
         var specTex = property("_SpecularTex");
         var specTexName = MakeLabel(specTex.displayName, "Specular (RGB)");
 
         var specColor = property("_SpecularColor");
         materialEditor.TexturePropertySingleLine(specTexName, specTex, specColor);
 
+
         EditorGUI.indentLevel += 2;
         var specGloss = property("_SpecularGloss");
         materialEditor.RangeProperty(specGloss, specGloss.displayName);
-        if (!ToonStandardConfiguration.Instance.EnergyConservationEnabled)
-        {
-            // Specular power breaks energy conservation, so disable it if energy conservation is enabled
-            var specPower = property("_SpecularPower");
-            materialEditor.FloatProperty(specPower, specPower.displayName);
-        }
+
+        var specPower = property("_SpecularPower");
+        materialEditor.FloatProperty(specPower, specPower.displayName);
+
+        var rimLighting = property("_RimLighting");
+        materialEditor.ColorProperty(rimLighting, rimLighting.displayName);
         EditorGUI.indentLevel -= 2;
 
         materialEditor.TextureScaleOffsetProperty(specTex);
@@ -127,7 +130,7 @@ public class ToonStandardEditor : ShaderGUI
         var miniStyle = EditorStyles.miniLabel;
         miniStyle.wordWrap = true;
 
-        Material mat = materialEditor.target as Material;
+        
         if (mat != null)
         {
             Func<SpecDabCoordinates, string> coord2name = (SpecDabCoordinates c) => "DAB_COORDS_" + c.ToString().ToUpper();
@@ -160,23 +163,6 @@ public class ToonStandardEditor : ShaderGUI
                                 "To change the scale of Triplanar mapping globally, see the Toon " +
                                 "Standard configuration.", miniStyle);
             }
-        }
-
-        if (Event.current.type == EventType.Layout)
-            _ShowEnergyConservationWarning = specColor.colorValue.grayscale > 0.5 && config.EnergyConservationEnabled;
-        if (_ShowEnergyConservationWarning)
-        {
-            _ExpandedEnergyConservationWarning = EditorGUILayout.BeginFoldoutHeaderGroup(_ExpandedEnergyConservationWarning, "Warning: Energy conservation is enabled...");
-            if(_ExpandedEnergyConservationWarning)
-            {
-                GUILayout.Label("Warning: Energy conservation is enabled and this material has a " +
-                                "high specular component.  So this material may appear to have a " +
-                                "black Albedo, because with energy conservation Albedo + Specular ≤ 1.  " +
-                                "To make the albedo appear brighter, disable energy conservation in " +
-                                "the global Toon Standard Configuration, or reduce the specular term.",
-                                miniStyle);
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
         }
 
         if (Event.current.type == EventType.Layout)

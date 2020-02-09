@@ -86,8 +86,6 @@ public class ToonStandardConfiguration : ScriptableObject
     [SerializeField]
     [Range(0.0f, 1.0f)]
     public float DiffuseWrapAmount = 1.0f;
-    [SerializeField]
-    public bool EnergyConservationEnabled = false;
     [Header("Specular Dabs")]
     [SerializeField]
     public Texture2D SpecularDabs = default;
@@ -211,17 +209,6 @@ public class ToonStandardConfiguration : ScriptableObject
         {
             Shader.EnableKeyword("DIFFUSE_WRAP_OFF");
             Shader.DisableKeyword("DIFFUSE_WRAP_ON");
-        }
-
-        if (EnergyConservationEnabled)
-        {
-            Shader.EnableKeyword("ENERGY_CONSERVATION_ON");
-            Shader.DisableKeyword("ENERGY_CONSERVATION_OFF");
-        }
-        else
-        {
-            Shader.EnableKeyword("ENERGY_CONSERVATION_OFF");
-            Shader.DisableKeyword("ENERGY_CONSERVATION_ON");
         }
 
         if (ToonGradientRasterized == null)
