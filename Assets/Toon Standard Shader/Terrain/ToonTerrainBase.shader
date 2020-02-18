@@ -38,6 +38,7 @@ Shader "Hidden/TerrainEngine/Splatmap/ToonStandard-Base" {
 
             #define DAB_COORDS_TRIPLANAR
             #define DIFFUSE_WRAP_OFF
+            #define FORWARD_BASE_PASS
 
             #include "ToonTerrainForwardBaseCommon.cginc"
             

@@ -17,6 +17,8 @@
 #include "Lighting.cginc"
 #include "AutoLight.cginc"
 
+#define SHOULD_USE_LIGHTMAPUV (defined(LIGHTMAP_ON) || ADDITIONAL_MASKED_DIRECTIONAL_SHADOWS)
+
 struct v2f {
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
@@ -140,7 +142,6 @@ fixed4 frag (
     half4 defaultSmoothness = half4(_Smoothness0, _Smoothness1, _Smoothness2, _Smoothness3);
     SplatmapMix(i.uv, defaultSmoothness, splat_control, weight, mixedDiffuse, normals, mixedMask);
     half metallic = dot(splat_control, half4(_Metallic0, _Metallic1, _Metallic2, _Metallic3));
-
     ToonPixelData data;
     data.albedo.rgb = mixedDiffuse.rgb;
     //data.albedo.a = weight;

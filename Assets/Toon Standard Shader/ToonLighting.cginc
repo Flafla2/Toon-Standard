@@ -183,7 +183,7 @@ fixed4 shadeToon ( ToonPixelData d ) {
     #endif
 
     float specPow = d.specGloss * 100;
-    float3 specular = pow(ndotv, specPow) * d.specPower * light.color * d.specular * specDabs;
+    fixed3 specular = saturate(pow(ndotv, specPow)) * d.specPower * light.color * d.specular * specDabs;
     
     ndotl = lightingRamp(ndotl);
 
@@ -195,13 +195,12 @@ fixed4 shadeToon ( ToonPixelData d ) {
 
     float grazing = saturate(d.albedo.a + (1 - oneMinusReflectivity));
     float fresnel = saturate(1 - pow(dot(viewDir, d.worldNormal), 1/((1-0.9*d.rimLighting.a) * 10)));
-
+    
     specular += indLight.specular * (d.specular.rgb * reflectivity + d.rimLighting * fresnel);
-
     // Obey energy conservation in the diffuse term (integral of brdf = 1)
     ndotl /= _RampIntegral;
 
-    float3 diffuse = d.albedo.rgb * (light.color * ndotl + indLight.diffuse);
+    fixed3 diffuse = d.albedo.rgb * (light.color * ndotl + indLight.diffuse);
     
     return fixed4(specular + diffuse, 1.0);
 }

@@ -30,6 +30,7 @@ Shader "Hidden/TerrainEngine/Splatmap/ToonStandard-AddPass" {
             #define DAB_COORDS_TRIPLANAR
             #define DIFFUSE_WRAP_OFF
             #define TERRAIN_SPLAT_ADDPASS
+            #define FORWARD_BASE_PASS
 
             #include "ToonTerrainForwardCommon.cginc"
             

@@ -17,6 +17,8 @@
 #include "Lighting.cginc"
 #include "AutoLight.cginc"
 
+#define SHOULD_USE_LIGHTMAPUV (defined(LIGHTMAP_ON) || ADDITIONAL_MASKED_DIRECTIONAL_SHADOWS)
+
 struct v2f {
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
