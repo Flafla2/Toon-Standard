@@ -10,10 +10,9 @@ Shader "Toon Standard"
         [NoScaleOffset] _NormalMap ("Normal Map", 2D) = "bump" {}
         _Color ("Tint", Color) = (1,1,1,1)
         
-        _SpecularTex ("Specular Color", 2D) = "white" {}
-        _SpecularColor ("Specular Tint", Color) = (1,1,1,1)
+        _SpecularTex ("Specular Texture, Color (RGB) Power (A)", 2D) = "white" {}
+        _SpecularColor ("Specular Tint, Color (RGB) Power (A)", Color) = (1,1,1,1)
         _SpecularGloss ("Highlight Gloss", Range(0.01, 5.0)) = 0.1
-        _SpecularPower ("Highlight Power", Float) = 1.0
         _RimLighting ("Rim Lighting (RGB) Power (A)", Color) = (1,1,1,1)
                 
         _EmissionTex ("Emission", 2D) = "white" {}
@@ -47,12 +46,10 @@ Shader "Toon Standard"
             // Use "Half Lambert" / Valve shading for the diffuse map
             #pragma multi_compile DIFFUSE_WRAP_ON DIFFUSE_WRAP_OFF
             #pragma multi_compile DAB_COORDS_TRIPLANAR DAB_COORDS_UV DAB_COORDS_UV2
-            
-            #include "ToonMultiCompiles.cginc"
-            
+                        
             #define FORWARD_BASE_PASS
             
-            #include "ToonLighting.cginc"
+            #include "ToonStandardForwardCommon.cginc"
             
             ENDCG
         }
@@ -77,10 +74,8 @@ Shader "Toon Standard"
             
             #pragma multi_compile DIFFUSE_WRAP_ON DIFFUSE_WRAP_OFF
             #pragma multi_compile DAB_COORDS_TRIPLANAR DAB_COORDS_UV DAB_COORDS_UV2
-            
-            #include "ToonMultiCompiles.cginc"
-            
-            #include "ToonLighting.cginc"
+                        
+            #include "ToonStandardForwardCommon.cginc"
             
             ENDCG
         }

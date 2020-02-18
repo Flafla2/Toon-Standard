@@ -22,41 +22,12 @@
 
 // Derived from unity shader source
 // AutoLight.cginc:123
-#define SHOULD_USE_SHADOWCOORD defined(SHADOWS_SCREEN) || defined(SHADOWS_SHADOWMASK)
-#define SHOULD_USE_LIGHTMAPUV defined(LIGHTMAP_ON) || ADDITIONAL_MASKED_DIRECTIONAL_SHADOWS
-
-
-// Shader Structs //
-
-struct appdata {
-    float4 vertex : POSITION;
-    float4 normal : NORMAL;
-    float4 tangent : TANGENT;
-    float2 uv : TEXCOORD0;
-    float2 uv2 : TEXCOORD1;
-};
-
-struct v2f {
-    float2 uv : TEXCOORD0;
-    float3 normal : TEXCOORD1;
-    float3 worldPos : TEXCOORD2;
-    float4 pos : TEXCOORD3;
-    #if defined(VERTEXLIGHT_ON)
-        float3 vertexLightColor : TEXCOORD4;
-    #endif
-    UNITY_SHADOW_COORDS(5)
-    UNITY_FOG_COORDS(6)
-    #if SHOULD_USE_LIGHTMAPUV
-        float2 lightmapUV : TEXCOORD7;
-    #endif
-    float2 uv2 : TEXCOORD8;
-    float3 tangent : TEXCOORD9;
-    float3 binormal : TEXCOORD10;
-};
+#define SHOULD_USE_SHADOWCOORD (defined(SHADOWS_SCREEN) || defined(SHADOWS_SHADOWMASK))
+#define SHOULD_USE_LIGHTMAPUV (defined(LIGHTMAP_ON) || ADDITIONAL_MASKED_DIRECTIONAL_SHADOWS)
 
 struct ToonPixelData {
     fixed4 albedo;
-    fixed4 specular;
+    fixed3 specular;
     fixed4 rimLighting;
     float4 pos;
     float3 worldPos;
@@ -79,7 +50,7 @@ struct ToonPixelData {
     #endif
     float2 uv;
     #if DAB_COORDS_UV2
-    float2 uv2;
+        float2 uv2;
     #endif
 };
 
@@ -232,122 +203,6 @@ fixed4 shadeToon ( ToonPixelData d ) {
     float3 diffuse = d.albedo.rgb * (light.color * ndotl + indLight.diffuse);
     
     return fixed4(specular + diffuse, 1.0);
-}
-
-// Shader Imports //
-
-sampler2D _MainTex;
-float4 _MainTex_ST;
-float4 _Color;
-sampler2D _SpecularTex;
-float4 _SpecularTex_ST;
-float4 _SpecularColor;
-float _SpecularPower;
-float _SpecularGloss;
-float4 _EmissionTex_ST;
-sampler2D _EmissionTex;
-float4 _EmissionColor;
-float4 _DabsScale;
-float4 _RimLighting;
-sampler2D _NormalMap;
-float _BumpScale;
-
-#if DIFFUSE_WRAP_ON
-float _DiffuseWrapAmount = 0.5;
-#endif
-
-// Vertex / Fragment Shader //
-
-// https://catlikecoding.com/unity/tutorials/rendering/part-5/
-void ComputeVertexLightColor (v2f i) {
-    #if defined(VERTEXLIGHT_ON)
-        i.vertexLightColor = Shade4PointLights(
-            unity_4LightPosX0, unity_4LightPosY0, unity_4LightPosZ0,
-            unity_LightColor[0].rgb, unity_LightColor[1].rgb,
-            unity_LightColor[2].rgb, unity_LightColor[3].rgb,
-            unity_4LightAtten0, i.worldPos, i.normal
-        );
-    #endif
-}
-
-v2f vert (
-    appdata v,
-    out float4 outworldPos : SV_POSITION
-) {
-    v2f o;
-    UNITY_INITIALIZE_OUTPUT(v2f, o);
-    
-    outworldPos = UnityObjectToClipPos(v.vertex);
-    o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-    #if SHOULD_USE_LIGHTMAPUV
-        o.lightmapUV = v.uv2 * unity_LightmapST.xy + unity_LightmapST.zw;
-    #endif
-
-    // https://catlikecoding.com/unity/tutorials/rendering/part-6/
-    o.normal = UnityObjectToWorldNormal(v.normal);
-    o.tangent = UnityObjectToWorldDir(v.tangent.xyz);
-    o.binormal = cross(o.normal.xyz, o.tangent.xyz) * (v.tangent.w * unity_WorldTransformParams.w);
-
-    o.worldPos = mul(unity_ObjectToWorld, v.vertex);
-    o.pos = UnityObjectToClipPos(v.vertex);
-    ComputeVertexLightColor(o);
-    UNITY_TRANSFER_FOG(o,outworldPos);
-    UNITY_TRANSFER_SHADOW(o, v.uv2);
-    #if DAB_COORDS_UV2
-    o.uv2 = v.uv2;
-    #endif
-    return o;
-}
-
-fixed4 frag (
-    v2f i,
-    UNITY_VPOS_TYPE screenPos : VPOS
-) : SV_Target {
-    fixed4 mainColor = tex2D(_MainTex, i.uv) * _Color;
-    fixed3 normals = UnpackScaleNormal(tex2D(_NormalMap, i.uv), _BumpScale);
-    fixed4 specColor = tex2D(_SpecularTex, i.uv) * _SpecularColor;
-        
-    ToonPixelData data;
-    data.albedo = mainColor;
-    data.specular = specColor;
-    data.worldPos = i.worldPos;
-
-    data.worldNormal = normalize(
-        normals.x * i.tangent  +
-        normals.y * i.binormal +
-        normals.z * i.normal
-    );
-
-    data.specGloss = _SpecularGloss;
-    data.specPower = _SpecularPower;
-    data.rimLighting = _RimLighting;
-    data.pos = i.pos;
-    #if DIFFUSE_WRAP_ON
-    data.wrapAmount = _DiffuseWrapAmount;
-    #endif
-    #if defined(VERTEXLIGHT_ON)
-    data.vertexLightColor = i.vertexLightColor;
-    #endif
-    #if SHOULD_USE_SHADOWCOORD
-    data._ShadowCoord = i._ShadowCoord;
-    #endif
-    #if SHOULD_USE_LIGHTMAPUV
-    data.lightmapUV = i.lightmapUV;
-    #endif
-    #if DAB_COORDS_UV2
-    data.uv2 = i.uv2 * _DabsScale.xy;
-    #endif
-    data.uv = i.uv * _DabsScale.xy;
-    
-    fixed4 col = shadeToon(data);
-    
-    #if defined(FORWARD_BASE_PASS)
-    fixed4 emission = tex2D(_EmissionTex, i.uv) * _EmissionColor;
-    col += emission;
-    #endif
-    
-    UNITY_APPLY_FOG(i.fogCoord, col);
-    return col;
 }
 
 #endif // TOON_LIGHTING_DEFINED
