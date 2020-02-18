@@ -9,6 +9,7 @@ Shader "Hidden/TerrainEngine/Splatmap/ToonStandard-Base" {
     Properties {
         _MainTex ("Base (RGB) Smoothness (A)", 2D) = "white" {}
         _MetallicTex ("Metallic (R)", 2D) = "white" {}
+        _MaskTex ("Mask (RGB)", 2D) = "black" {}
 
         // used in fallback on old cards
         _Color ("Main Color", Color) = (1,1,1,1)
