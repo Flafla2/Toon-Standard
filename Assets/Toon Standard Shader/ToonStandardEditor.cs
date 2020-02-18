@@ -84,9 +84,6 @@ public class ToonStandardEditor : ShaderGUI
         var specGloss = property("_SpecularGloss");
         materialEditor.RangeProperty(specGloss, specGloss.displayName);
 
-        var specPower = property("_SpecularPower");
-        materialEditor.FloatProperty(specPower, specPower.displayName);
-
         var rimLighting = property("_RimLighting");
         materialEditor.ColorProperty(rimLighting, rimLighting.displayName);
         EditorGUI.indentLevel -= 2;

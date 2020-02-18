@@ -55,7 +55,6 @@ UNITY_DECLARE_TEX2D_NOSAMPLER(_Mask1);
 UNITY_DECLARE_TEX2D_NOSAMPLER(_Mask2);
 UNITY_DECLARE_TEX2D_NOSAMPLER(_Mask3);
 float4 _RimLighting;
-float4 _DabsScale;
 
 #ifdef _NORMALMAP
     sampler2D _Normal0, _Normal1, _Normal2, _Normal3;
@@ -168,7 +167,6 @@ fixed4 frag (
     #if SHOULD_USE_LIGHTMAPUV
     data.lightmapUV = i.lightmapUV;
     #endif
-    data.uv = i.uv * _DabsScale.xy;
     
     fixed4 col = shadeToon(data);
     

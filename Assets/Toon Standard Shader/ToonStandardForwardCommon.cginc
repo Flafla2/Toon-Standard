@@ -75,10 +75,12 @@ fixed4 frag (
     #if SHOULD_USE_LIGHTMAPUV
         data.lightmapUV = i.lightmapUV;
     #endif
-    #if DAB_COORDS_UV2
+    #if DAB_COORDS_UV
+        data.uv = i.uv * _DabsScale.xy;
+    #elif DAB_COORDS_UV2
         data.uv2 = i.uv2 * _DabsScale.xy;
     #endif
-    data.uv = i.uv * _DabsScale.xy;
+    
     
     fixed4 col = shadeToon(data);
     

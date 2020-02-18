@@ -1,11 +1,14 @@
-﻿Shader "Nature/Terrain/Toon Standard" {
+﻿// Toon Standard Shader
+// Adrian Biagioli (github.com/Flafla2)
+// See LICENSE.txt
+
+Shader "Nature/Terrain/Toon Standard" {
     Properties {
         // used in fallback on old cards & base map
         [HideInInspector] _MainTex ("BaseMap (RGB)", 2D) = "white" {}
         [HideInInspector] _Color ("Main Color", Color) = (1,1,1,1)
 
         _RimLighting ("Rim Lighting (RGB) Power (A)", Color) = (1,1,1,1)
-        _DabsScale ("Specular Dabs Scale", Vector) = (1,1,1,1)
     }
 
     SubShader {
@@ -117,10 +120,8 @@
     }
 
     Dependency "AddPassShader"    = "Hidden/TerrainEngine/Splatmap/ToonStandard-AddPass"
-    Dependency "BaseMapShader"    = "Hidden/TerrainEngine/Splatmap/Standard-Base"
-    Dependency "BaseMapGenShader" = "Hidden/TerrainEngine/Splatmap/Standard-BaseGen"
-    // Dependency "BaseMapShader"    = "Hidden/TerrainEngine/Splatmap/ToonStandard-Base"
-    // Dependency "BaseMapGenShader" = "Hidden/TerrainEngine/Splatmap/ToonStandard-BaseGen"
+    Dependency "BaseMapShader"    = "Hidden/TerrainEngine/Splatmap/ToonStandard-Base"
+    Dependency "BaseMapGenShader" = "Hidden/TerrainEngine/Splatmap/ToonStandard-BaseGen"
 
     Fallback "Nature/Terrain/Diffuse"
 }

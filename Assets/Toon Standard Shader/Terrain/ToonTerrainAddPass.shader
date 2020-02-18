@@ -1,4 +1,8 @@
-﻿Shader "Hidden/TerrainEngine/Splatmap/ToonStandard-AddPass" {
+﻿// Toon Standard Shader
+// Adrian Biagioli (github.com/Flafla2)
+// See LICENSE.txt
+
+Shader "Hidden/TerrainEngine/Splatmap/ToonStandard-AddPass" {
     SubShader {
         Tags {
             "Queue" = "Geometry-99"

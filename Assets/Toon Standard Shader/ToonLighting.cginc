@@ -48,8 +48,9 @@ struct ToonPixelData {
     #if SHOULD_USE_LIGHTMAPUV
         float2 lightmapUV;
     #endif
-    float2 uv;
-    #if DAB_COORDS_UV2
+    #if DAB_COORDS_UV
+        float2 uv;
+    #elif DAB_COORDS_UV2
         float2 uv2;
     #endif
 };
