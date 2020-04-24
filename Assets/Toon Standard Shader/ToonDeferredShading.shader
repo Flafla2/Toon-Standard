@@ -21,6 +21,7 @@ Shader "Hidden/ToonDeferredShading" {
 
 			#pragma exclude_renderers nomrt
 
+            #define DEFERRED_PASS
 			#include "ToonStandardDeferredIntegrator.cginc"
 
 			ENDCG
