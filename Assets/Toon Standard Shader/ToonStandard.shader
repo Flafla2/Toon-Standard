@@ -42,6 +42,7 @@ Shader "Toon Standard"
             #pragma multi_compile _ VERTEXLIGHT_ON
             #pragma multi_compile _ SHADOWS_SCREEN
             #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ UNITY_HDR_ON
             
             // Use "Half Lambert" / Valve shading for the diffuse map
             #pragma multi_compile DIFFUSE_WRAP_ON DIFFUSE_WRAP_OFF
@@ -49,8 +50,37 @@ Shader "Toon Standard"
                         
             #define FORWARD_BASE_PASS
             
-            #include "ToonStandardForwardCommon.cginc"
+            #include "ToonStandardKernels.cginc"
             
+            ENDCG
+        }
+        
+        Pass {
+            Tags {
+                "LightMode" = "Deferred"
+            }
+
+            CGPROGRAM
+
+            #pragma target 3.0
+            #pragma exclude_renderers nomrt
+
+            #pragma multi_compile _ VERTEXLIGHT_ON
+            #pragma multi_compile _ SHADOWS_SCREEN
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ UNITY_HDR_ON
+            
+            // Use "Half Lambert" / Valve shading for the diffuse map
+            #pragma multi_compile DIFFUSE_WRAP_ON DIFFUSE_WRAP_OFF
+            #pragma multi_compile DAB_COORDS_TRIPLANAR DAB_COORDS_UV DAB_COORDS_UV2
+
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #define DEFERRED_PASS
+
+            #include "ToonStandardKernels.cginc"
+
             ENDCG
         }
         
@@ -71,11 +101,12 @@ Shader "Toon Standard"
             
             #pragma multi_compile_fog
             #pragma multi_compile_fwdadd_fullshadows
+            #pragma multi_compile _ UNITY_HDR_ON
             
             #pragma multi_compile DIFFUSE_WRAP_ON DIFFUSE_WRAP_OFF
             #pragma multi_compile DAB_COORDS_TRIPLANAR DAB_COORDS_UV DAB_COORDS_UV2
                         
-            #include "ToonStandardForwardCommon.cginc"
+            #include "ToonStandardKernels.cginc"
             
             ENDCG
         }

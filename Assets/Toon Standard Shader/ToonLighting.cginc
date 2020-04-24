@@ -87,14 +87,19 @@ float3 colorLightingRamp(in float3 inColor) {
 UnityLight CreateLight (in ToonPixelData i) {
     UnityLight light;
     
-    #if defined(POINT) || defined(POINT_COOKIE) || defined(SPOT)
-        light.dir = normalize(_WorldSpaceLightPos0.xyz - i.worldPos);
+    #if defined(DEFERRED_PASS)
+        light.dir = float3(0, 1, 0);
+        light.color = 0;
     #else
-        light.dir = _WorldSpaceLightPos0.xyz;
+        #if defined(POINT) || defined(POINT_COOKIE) || defined(SPOT)
+            light.dir = normalize(_WorldSpaceLightPos0.xyz - i.worldPos);
+        #else
+            light.dir = _WorldSpaceLightPos0.xyz;
+        #endif
+        
+        UNITY_LIGHT_ATTENUATION(attenuation, i, i.worldPos);
+        light.color = _LightColor0.rgb * attenuation;
     #endif
-    
-    UNITY_LIGHT_ATTENUATION(attenuation, i, i.worldPos);
-    light.color = _LightColor0.rgb * attenuation;
     return light;
 }
 
@@ -103,12 +108,12 @@ UnityIndirect CreateIndirectLight (in ToonPixelData i, in float3 viewDir) {
     UnityIndirect indirectLight;
     indirectLight.diffuse = 0;
     indirectLight.specular = 0;
-
+    
     #if defined(VERTEXLIGHT_ON)
         indirectLight.diffuse = i.vertexLightColor;
     #endif
-    
-    #if defined(FORWARD_BASE_PASS)
+        
+    #if defined(FORWARD_BASE_PASS) || defined(DEFERRED_PASS)
         #if defined(LIGHTMAP_ON)
             float3 lightmap = DecodeLightmap(
                 UNITY_SAMPLE_TEX2D(unity_Lightmap, i.lightmapUV)
@@ -126,12 +131,13 @@ UnityIndirect CreateIndirectLight (in ToonPixelData i, in float3 viewDir) {
             UNITY_PASS_TEXCUBE(unity_SpecCube0), unity_SpecCube0_HDR, envData
         );
     #endif
-    
     return indirectLight;
 }
 
 
 // Shading Logic //
+
+#define FRESNEL(VIEW_DIR, WORLD_NORMAL, RIM_POWER) (1 - saturate(pow(saturate(dot(VIEW_DIR, WORLD_NORMAL) /3 ), RIM_POWER / 10)))
 
 fixed4 shadeToon ( ToonPixelData d ) {
     // float oneMinusReflectivity;
@@ -193,16 +199,16 @@ fixed4 shadeToon ( ToonPixelData d ) {
     //       consistent with the Standard shader.
     specular = specular * (specPow + 8.0) / 8.0;
 
-    float grazing = saturate(d.albedo.a + (1 - oneMinusReflectivity));
-    float fresnel = saturate(1 - pow(dot(viewDir, d.worldNormal), 1/((1-0.9*d.rimLighting.a) * 10)));
+    //float fresnel = 1 - saturate(pow(saturate(dot(viewDir, d.worldNormal) /3 ), d.rimLighting.a / 10));
+    float fresnel = FRESNEL(viewDir, d.worldNormal, d.rimLighting.a);
+    specular += indLight.specular * d.specular.rgb * reflectivity;
     
-    specular += indLight.specular * (d.specular.rgb * reflectivity + d.rimLighting * fresnel);
     // Obey energy conservation in the diffuse term (integral of brdf = 1)
     ndotl /= _RampIntegral;
 
     fixed3 diffuse = d.albedo.rgb * (light.color * ndotl + indLight.diffuse);
     
-    return fixed4(specular + diffuse, 1.0);
+    return fixed4(specular + diffuse + d.rimLighting.rgb * fresnel, 1.0);
 }
 
 #endif // TOON_LIGHTING_DEFINED

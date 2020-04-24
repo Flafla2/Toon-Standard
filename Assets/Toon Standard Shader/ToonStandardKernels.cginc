@@ -15,6 +15,8 @@
 #include "Lighting.cginc"
 #include "AutoLight.cginc"
 
+#define SHOULD_USE_LIGHTMAPUV (defined(LIGHTMAP_ON) || ADDITIONAL_MASKED_DIRECTIONAL_SHADOWS)
+
 struct v2f {
     float2 uv : TEXCOORD0;
     float3 normal : TEXCOORD1;
@@ -33,6 +35,17 @@ struct v2f {
     float3 binormal : TEXCOORD10;
 };
 
+struct FragmentOutput {
+    #if defined(DEFERRED_PASS)
+        float4 gBuffer0 : SV_Target0;
+        float4 gBuffer1 : SV_Target1;
+        float4 gBuffer2 : SV_Target2;
+        float4 gBuffer3 : SV_Target3;
+    #else
+        float4 color : SV_Target;
+    #endif
+};
+
 // Include vertex shader
 #include "ToonStandardVertex.cginc"
 // Include lighting utilities (brdf, etc)
@@ -40,7 +53,7 @@ struct v2f {
 // Include Uniforms
 #include "ToonStandardUniforms.cginc"
 
-fixed4 frag (
+FragmentOutput frag (
     v2f i,
     UNITY_VPOS_TYPE screenPos : VPOS
 ) : SV_Target {
@@ -81,16 +94,37 @@ fixed4 frag (
         data.uv2 = i.uv2 * _DabsScale.xy;
     #endif
     
-    
-    fixed4 col = shadeToon(data);
-    
-    #if defined(FORWARD_BASE_PASS)
+    #if defined(FORWARD_BASE_PASS) || defined(DEFERRED_PASS)
         fixed4 emission = tex2D(_EmissionTex, i.uv) * _EmissionColor;
-        col += emission;
+    #else
+        fixed4 emission = 0;
     #endif
     
-    UNITY_APPLY_FOG(i.fogCoord, col);
-    return col;
+    FragmentOutput output;
+    #if defined(DEFERRED_PASS)
+        // Add fresnel term to deferred pass via emission channel
+        float3 viewDir = normalize(_WorldSpaceCameraPos - data.worldPos);
+        UnityIndirect indLight = CreateIndirectLight(data, viewDir);
+        float fresnel = FRESNEL(viewDir, data.worldNormal, data.rimLighting.a);
+        emission += float4(fresnel * data.rimLighting.rgb, 0);
+        // Include diffuse ambient light in emission term.
+        emission += float4(data.albedo.rgb * indLight.diffuse, 0);
+        #if !defined(UNITY_HDR_ON)
+			emission.rgb = exp2(-emission.rgb);
+		#endif
+    
+        output.gBuffer0.rgb = data.albedo.rgb;
+        output.gBuffer0.a = data.specGloss / 50;
+        output.gBuffer1.rgb = data.specular.rgb;
+        output.gBuffer1.a = data.specPower / 50;
+        output.gBuffer2 = float4(data.worldNormal.xyz * 0.5 + 0.5, 1);
+        output.gBuffer3 = emission;
+    #else
+        fixed4 col = shadeToon(data) + emission;
+        UNITY_APPLY_FOG(i.fogCoord, col);
+        output.color = col;
+    #endif
+    return output;
 }
 
 #endif // TOON_STANDARD_FWD_COMMON
